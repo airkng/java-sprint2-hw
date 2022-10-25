@@ -241,11 +241,12 @@ public class FinanceFileReader {
     }
 
     public void compareReports(int inputYear){
-        if(Report.globalInfoMonthReportsMap.containsKey(inputYear) && Report.globalInfoYearReportsMap.containsKey(inputYear)) {
+        if(Report.globalInfoMonthReportsMap.containsKey(inputYear) || Report.globalInfoYearReportsMap.containsKey(inputYear)) {
             Report.compareReports(inputYear);
         }
         else{
             System.out.println("За " + inputYear + " год не были считаны месячные и годовые отчеты");
+            System.out.println();
         }
     }
 }
