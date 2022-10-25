@@ -35,8 +35,6 @@ public class FinanceFileReader {
         }
     }
 
-
-
     /** Логика метода ниже отличается от логики метода @setMonthReportToObjects
      * Здесь он читает и преобразовывает построчно И отправляет в ОДНУ считанную строчку в
      * @yearReportGlobalInfo.addYearReport. То есть это строчка, которая по сути содержит
@@ -48,7 +46,16 @@ public class FinanceFileReader {
      * В методе же @setMonthReportToObjects считывается ОДНА строчка, проходит проверки,
      * корректируется (.trim() .replaceAll("\\s+", "") и снова засовывается в другой массив
      * уже КОРРЕКТНЫХ строк. И только после отправляет в метод @monthReportGlobalInfo.addMonthReport скорректированных
-     * строк
+     * строк. Далее данные в методе @monthReportGlobalInfo.addMonthReport уже сплитуются по запятой.
+     * Еще раз, туда прилетает массив строк типа:
+     * String[] correcMonthReport =
+     * [0] - [Коньки,true,50,2000]
+     * [1] - [Новогодняя ёлка,true,1,100000]
+     * [2] - [Ларёк с кофе,true,3,50000]
+     * ...
+     * Далее сплитуются и построчо идут в метод @addInfo класса MonthReport
+     *
+     * На этом я все, отправляю проект тебе еще раз :)
      */
     private void setYearReportToObjects(String yearFile) {
         YearReportGlobalInfo yearReportGlobalInfo = new YearReportGlobalInfo();
@@ -90,7 +97,6 @@ public class FinanceFileReader {
                     break;
                 }
             }
-
         }
     }
 
@@ -170,7 +176,7 @@ public class FinanceFileReader {
             monthReportGlobalInfo = Report.globalInfoMonthReportsMap.get(inputYear);
         }
         String[] linesFromReport = monthFile.split("\n");
-        String[] correctMonthReport = new String[linesFromReport.length];
+        String[] correctMonthReport = new String[linesFromReport.length - 1]; //не забываем, что 0 строчка у linesFromReport ненужная
 
         for (int i = 1; i < linesFromReport.length; i++) {
             String line = linesFromReport[i];
@@ -235,7 +241,11 @@ public class FinanceFileReader {
     }
 
     public void compareReports(int inputYear){
-        if(Report.globalInfoMonthReportsMap.containsKey(inputYear))
-        Report.compareReports(inputYear);
+        if(Report.globalInfoMonthReportsMap.containsKey(inputYear) && Report.globalInfoYearReportsMap.containsKey(inputYear)) {
+            Report.compareReports(inputYear);
+        }
+        else{
+            System.out.println("За " + inputYear + " год не были считаны месячные и годовые отчеты");
+        }
     }
 }

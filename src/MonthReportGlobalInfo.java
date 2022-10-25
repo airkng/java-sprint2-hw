@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 
-
 public class MonthReportGlobalInfo {
 
     public ArrayList<MonthReport> monthReportsList = new ArrayList<>();
@@ -9,7 +8,7 @@ public class MonthReportGlobalInfo {
         MonthReport monthReport = new MonthReport();
         Integer amount;
         boolean isExpense;
-        for (int i = 0; i < monthInfo.length - 1; i++) {
+        for (int i = 0; i < monthInfo.length; i++) {
             String line = monthInfo[i];
             String[] valuesFromLine = line.split(",");
             amount = Integer.parseInt(valuesFromLine[2]) * Integer.parseInt(valuesFromLine[3]);
