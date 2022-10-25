@@ -3,8 +3,9 @@ import java.util.Scanner;
 
 public class YearReportGlobalInfo {
     /**
+     * Старая документация, ничего нового в ней нет. Прикрепил пару комментов к некоторым моментам ниже непосредственно в коде
      * Класс YearReportGlobalInfo хранит в себе мапу, в качестве ключа идет месяц, в качестве значения класс @YearReport.
-     * Аналогично мапе в классе Reports, я вынимаю значения у существующей пары ключ-значения, добавляю туда новые данные
+     * Аналогично статической мапе в классе Reports, я вынимаю значения у существующей пары ключ-значения, добавляю туда новые данные
      * и убираю в мапу.
      * Если у значение мапы не вынимается по ключу, просто создаю новую пару.
      *
@@ -20,7 +21,7 @@ public class YearReportGlobalInfo {
      * 4. Кладем в мапу
      * 5. Считаю значения всех переменных выше
      *
-     * Единственное, на что стоит обратить внимание - условие 89 строки:
+     * Единственное, на что стоит обратить внимание - условие 95 строки:
      *      "Если сумма является доходом И лист доходов у вынутого из мапы значения не пустой ИЛИ
      *      сумма яв-ся расходом И лист расходов у вынутого из мапы значения не пустой."
      * Тогда я выкидываю метод @chooseAction и дальше уже определяю, что делать с этим
@@ -28,12 +29,13 @@ public class YearReportGlobalInfo {
      */
 
     private static Integer currentMonth = 0;
-    private Integer totalIncome = 0; //Доход за год
-    private Integer totalExpense = 0;
-    private Integer totalProfit = 0; //Прибыль за год
+    //эта статик переменная используется еще в классе @YearReport для отображения добавленной траты за текущий месяц
+    // Интересно послушать твои комменты
 
-    private Double averageIncome = 0.0; //Средний доход за год
-    private Double averageExpense = 0.0;
+    // Убрал все поля (Сум.дохода, расхода, среднего доходоа и тд.) за год по твоему совету
+    // Я почему их добавил: я подумал, что, если годовой отчет содержит очень много информации:
+    // все 12 месяцев с суммами и повторяющиеся месячные траты, то лучше сразу их посчитать, вместо того, чтобы потом перебирать мапу,
+    // вынимать оттуда значения, считать каждое поле
     private Integer yearReportsCount = 0; //счетчик считанных месяцев
 
     HashMap<Integer, YearReport> yearReports = new HashMap<>();
@@ -42,21 +44,32 @@ public class YearReportGlobalInfo {
         return currentMonth;
     }
     public Integer getTotalProfit() {
+       Integer totalProfit = getTotalIncome() - getTotalExpense();
         return totalProfit;
     }
     public Integer getTotalIncome() {
+        Integer totalIncome = 0;
+        for (Integer month: yearReports.keySet()) {
+            totalIncome += yearReports.get(month).getSumIncomeInMonth();
+        }
         return totalIncome;
     }
     public Integer getTotalExpense(){
+        Integer totalExpense = 0;
+        for (Integer month: yearReports.keySet()) {
+            totalExpense += yearReports.get(month).getSumExpenseInMonth();
+        }
         return totalExpense;
     }
-    public  Integer getYearReportsCount() {
+    public Integer getYearReportsCount() {
         return yearReportsCount;
     }
     private Double getAverageIncome() {
+        Double averageIncome = Double.valueOf(getTotalIncome()) / yearReportsCount;
         return averageIncome;
     }
     private Double getAverageExpense() {
+        Double averageExpense = Double.valueOf(getTotalExpense()) / yearReportsCount;
         return averageExpense;
     }
 
@@ -64,74 +77,50 @@ public class YearReportGlobalInfo {
     private void setCurrentMonth(Integer currentMonth){
         YearReportGlobalInfo.currentMonth = currentMonth;
     }
-    private void setTotalIncome(Integer totalIncome) {
-        this.totalIncome = getTotalIncome() + totalIncome;
-    }
-    private void setTotalExpense(Integer totalExpense) {
-        this.totalExpense = getTotalExpense() + totalExpense;
-    }
-    private void calculateTotalProfit(){
-        totalProfit = getTotalIncome() - getTotalExpense();
-    }
 
-    private void calculateAverageIncome(){
-        averageIncome = Double.valueOf(getTotalIncome()) / yearReportsCount;
-    }
-    private void calculateAverageExpense(){
-        averageExpense = Double.valueOf(getTotalExpense()) / yearReportsCount;
-    }
 
-    public void addYearReport(Integer month, Integer amount, boolean isExpense){
+    public void addYearReport(Integer month, Integer amount, boolean isExpense) {
         YearReport newYearReport;
         setCurrentMonth(month);
-        if(yearReports.containsKey(month)){
+        //Как раз-таки я и сделал эту реализацию с учетом повторных месячных трат в годовом отчете
+        //следующее условие if - (newYearReport.getIncomes.size() >= 1 ...) и находит эту повторную трату и потом
+        //выкидывает выбор пользователю че с ней делать
+        if (yearReports.containsKey(month)) {
             newYearReport = yearReports.get(month);
-            if(newYearReport.incomes.size() >= 1 && (!isExpense) || (newYearReport.expenses.size() >= 1 && isExpense)){
+            if (newYearReport.getIncomes().size() >= 1 && (!isExpense) || (newYearReport.getExpenses().size() >= 1 && isExpense)) {
                 byte userCommand = chooseAction(amount);
                 if (userCommand == 1) { //Добавить еще одну сумму за месяц
                     if (isExpense) {
                         newYearReport.addExpense(amount);
-                        setTotalExpense(amount);
-                    }
-                    else {
+                    } else {
                         newYearReport.addIncome(amount);
-                        setTotalIncome(amount);
                     }
-                    yearReports.put(month, newYearReport);
-                } else {
+                yearReports.put(month, newYearReport);
+                } //иначе пропускаем значение
+                else {
                     System.out.println("Сумма " + amount + " пропущена");
                 }
-            }
-            else {
+            } else {
                 if (isExpense) {
                     newYearReport.addExpense(amount);
-                    setTotalExpense(amount);
-                }
-                else {
+                } else {
                     newYearReport.addIncome(amount);
-                    setTotalIncome(amount);
                 }
                 yearReports.put(month, newYearReport);
 
             }
-        }
-        else{
+        } else {
             yearReportsCount += 1; //счетчик считанных месяцев
             newYearReport = new YearReport();
-                if(isExpense) {
-                    newYearReport.addExpense(amount);
-                    setTotalExpense(amount);
-                }
-                else{
-                    newYearReport.addIncome(amount);
-                    setTotalIncome(amount);
-                }
+            if (isExpense) {
+                newYearReport.addExpense(amount);
+            } else {
+                newYearReport.addIncome(amount);
+            }
             yearReports.put(month, newYearReport);
-           }
-        calculateTotalProfit();
-        calculateAverageIncome();
-        calculateAverageExpense();
+        }
     }
+    //Byte сделал чтобы памяти меньше жрал
     private byte chooseAction(Integer amount){
         Scanner scanner = new Scanner(System.in);
         System.out.println("В месяце " + getCurrentMonth() + " годового отчета обнаружена новая сумма: " + amount + "\nВыберите действие: ");
@@ -158,14 +147,14 @@ public class YearReportGlobalInfo {
         return command;
     }
 
-
     public void printYearReport() {
         System.out.println("В отчете содержались " + getYearReportsCount() + " месяцев");
-        System.out.println("Прибыль: " + getTotalProfit());
         System.out.println("Общий годовой доход " + getTotalIncome());
         System.out.println("Общий годовой расход " + getTotalExpense());
+        System.out.println("Прибыль: " + getTotalProfit());
         System.out.println("Средний месячный доход: " + getAverageIncome());
         System.out.println("Средний месячный расход: " + getAverageExpense());
+        System.out.println();
     }
 
 

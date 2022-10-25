@@ -1,22 +1,17 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Scanner;
 
 
 public class FinanceFileReader {
-    //Счетчик проведенных дней за проектом: 4
+    //Счетчик проведенных дней за проектом: 5
     private Integer inputYear;
     private String relativePath;
+    //Удалил ненужную мапу, сейчас должно стать понятнее
 
-
-    private static HashMap<Integer, Report> reportsMap = new HashMap<>(); //Мапа, в которой содержатся годовые и месячные отчеты (Ключ - год)
-
-    private ArrayList<Integer> inputDataYearReports = new ArrayList<>(); //Лист ранее считанных годовых отчетов
-    private ArrayList<Integer> inputDataMonthReports = new ArrayList<>(); //Лист ранее считанных месячных отчетов
+    // По твоему совету убрал листы. Совет супер!
+    // Ниже оставил комменты
 
     private String readFileContentsOrNull(String path) {
         try {
@@ -28,28 +23,37 @@ public class FinanceFileReader {
     }
 
     public void readYearReport(int year) {
-        if (!isInputYearReportExist(year)) {
+        this.inputYear = year;
+        //Проверка на то, считывали ли мы отчет ранее
+        if (!Report.globalInfoYearReportsMap.containsKey(inputYear)) {
             relativePath = "resources/y." + year + ".csv";
             String yearFile = readFileContentsOrNull(relativePath);
             setYearReportToObjects(yearFile);
         }
-    }
-
-    private boolean isInputYearReportExist(int inputYear) {
-        this.inputYear = inputYear;
-        if (inputDataYearReports.contains(inputYear)) {
+        else {
             System.out.println("Годовой отчет за " + inputYear + " год уже существует");
-            return true;
-        } else {
-            inputDataYearReports.add(inputYear);
-            return false;
         }
     }
 
+
+
+    /** Логика метода ниже отличается от логики метода @setMonthReportToObjects
+     * Здесь он читает и преобразовывает построчно И отправляет в ОДНУ считанную строчку в
+     * @yearReportGlobalInfo.addYearReport. То есть это строчка, которая по сути содержит
+     * месяц-сумму-указание дохода/расхода идет аж до самого класса @YearReport. Поле месяц
+     * отпадает на уровне класса @YearGlobalInfo, т.к там есть мапа месяц --> класс YearReport,
+     * а поля "сумма" И "указание дохода/расхода" доходят до @YearReport и заносятся в лист Доходов/Расходов
+     * ЗА МЕСЯЦ. Сейчас идем и читаем документацию в класс YearReport.
+     *
+     * В методе же @setMonthReportToObjects считывается ОДНА строчка, проходит проверки,
+     * корректируется (.trim() .replaceAll("\\s+", "") и снова засовывается в другой массив
+     * уже КОРРЕКТНЫХ строк. И только после отправляет в метод @monthReportGlobalInfo.addMonthReport скорректированных
+     * строк
+     */
     private void setYearReportToObjects(String yearFile) {
-        Report report = new Report();
-        if(reportsMap.size() > 0 && reportsMap.containsKey(inputYear)) {
-            report = reportsMap.get(inputYear);
+        YearReportGlobalInfo yearReportGlobalInfo = new YearReportGlobalInfo();
+        if(Report.globalInfoYearReportsMap.containsKey(inputYear)) {
+            yearReportGlobalInfo = Report.globalInfoYearReportsMap.get(inputYear);
         }
         String[] linesFromReport = yearFile.split("\n");
         String[] reportsVariables;
@@ -70,8 +74,8 @@ public class FinanceFileReader {
                 amount = Integer.parseInt(reportsVariables[1]);
                 isExpense = Boolean.parseBoolean(reportsVariables[2]);
 
-                report.addYearReport(inputYear, monthNumber, amount, isExpense);
-                reportsMap.put(inputYear, report);
+                yearReportGlobalInfo.addYearReport(monthNumber, amount, isExpense);
+                Report.globalInfoYearReportsMap.put(inputYear, yearReportGlobalInfo);
 
             } else {
                 System.out.println("Данные могут записаны без учета данной строки. Записать?(Да/Нет)");
@@ -82,7 +86,7 @@ public class FinanceFileReader {
                 } else {
                     //Возможно, в методе ниже будет баг, когда у нас есть месячный отчет, он удалит весь(и годовой и месячный отчеты)
                     //Бага не обнаружено (:
-                    report.deleteYearReport(inputYear);
+                    Report.deleteYearReport(inputYear);
                     break;
                 }
             }
@@ -126,7 +130,7 @@ public class FinanceFileReader {
     }
 
     private static boolean isCorrectValue(String value) {
-        //Достаточная простенькая проверочка, насколько ты видишь, хз что еще придумать со своими знанниями
+        //Достаточная простенькая проверочка, насколько ты видишь, хз что еще придумать со своими знаниями
         //Можно конечно сделать условие, чтобы заканчивалась на цифры
         value = value.replaceAll("\\s+","");
         if (value.startsWith("-")) {
@@ -144,7 +148,9 @@ public class FinanceFileReader {
     }
 
     public void readMonthReport(int year) {
-        if (!isInputMonthReportExist(year)) {
+        //проверка на то, считывали ли отчет ранее
+        this.inputYear = year;
+        if (!Report.globalInfoMonthReportsMap.containsKey(inputYear)) {
             for (int i = 1; i < 4; i++) {
                 relativePath = "resources/m." + year + "0" + i + ".csv";
                 String monthFile = readFileContentsOrNull(relativePath);
@@ -152,24 +158,16 @@ public class FinanceFileReader {
             }
 
         }
-
-    }
-
-    private boolean isInputMonthReportExist(int inputYear) {
-        this.inputYear = inputYear;
-        if (inputDataMonthReports.contains(inputYear)) {
-            System.out.println("Месячные отчеты за " + inputYear + " год уже существуют");
-            return true;
-        } else {
-            inputDataMonthReports.add(inputYear);
-            return false;
+        else{
+            System.out.println("Месячный отчет за " + inputYear + " год уже существует");
         }
+
     }
 
     private void setMonthReportToObjects(String monthFile, int currentMonth) {
-        Report report = new Report();
-        if(reportsMap.size() > 0 && reportsMap.containsKey(inputYear)) {
-            report = reportsMap.get(inputYear);
+        MonthReportGlobalInfo monthReportGlobalInfo = new MonthReportGlobalInfo();
+        if(Report.globalInfoMonthReportsMap.containsKey(inputYear)) {
+            monthReportGlobalInfo = Report.globalInfoMonthReportsMap.get(inputYear);
         }
         String[] linesFromReport = monthFile.split("\n");
         String[] correctMonthReport = new String[linesFromReport.length];
@@ -192,8 +190,8 @@ public class FinanceFileReader {
                 return;
             }
         }
-        report.addMonthReport(correctMonthReport, inputYear, currentMonth);
-        reportsMap.put(inputYear, report);
+        monthReportGlobalInfo.addMonthReport(correctMonthReport, currentMonth);
+        Report.globalInfoMonthReportsMap.put(inputYear,monthReportGlobalInfo);
     }
     private boolean isCorrectVariablesFromMonthReport(String item, String isExpense, String quantity, String sumOfOne, int i){
         if(isExpense.trim().equalsIgnoreCase("false") || isExpense.trim().equalsIgnoreCase("true")){
@@ -237,12 +235,7 @@ public class FinanceFileReader {
     }
 
     public void compareReports(int inputYear){
-        if(reportsMap.size() > 0 && reportsMap.containsKey(inputYear)){
-            Report report = reportsMap.get(inputYear);
-            report.compareReports(inputYear);
-        }
-        else{
-            System.out.println("Отсутствуют годовые и месячные отчеты за данный год");
-        }
+        if(Report.globalInfoMonthReportsMap.containsKey(inputYear))
+        Report.compareReports(inputYear);
     }
 }

@@ -12,21 +12,11 @@ public class Report {
      * Если не существует, тогда просто добавляем данные о считанном отчете в мапу с ключом inputYear(Введенный год пользователем)
      *
      */
-   private static HashMap<Integer, YearReportGlobalInfo> globalInfoYearReportsMap = new HashMap<>();
-   private static HashMap<Integer, MonthReportGlobalInfo> globalInfoMonthReportsMap = new HashMap<>();
-
-   public void addYearReport(Integer year, Integer month, Integer amount, boolean isExpense){
-
-        YearReportGlobalInfo newYearReportGlobalInfo = new YearReportGlobalInfo();
-               if(globalInfoYearReportsMap.containsKey(year)){
-                   newYearReportGlobalInfo = globalInfoYearReportsMap.get(year);
-               }
-        newYearReportGlobalInfo.addYearReport(month,amount,isExpense);
-        globalInfoYearReportsMap.put(year, newYearReportGlobalInfo);
+   public static HashMap<Integer, YearReportGlobalInfo> globalInfoYearReportsMap = new HashMap<>();
+   public static HashMap<Integer, MonthReportGlobalInfo> globalInfoMonthReportsMap = new HashMap<>();
 
 
-    }
-    public void deleteYearReport(Integer year){
+    public static void deleteYearReport(Integer year){
         if(globalInfoYearReportsMap.size() > 0 && globalInfoYearReportsMap.containsKey(year)){
             globalInfoYearReportsMap.remove(year);
         }
@@ -42,16 +32,7 @@ public class Report {
             System.out.println("Введен неверный год, либо не загружены отчеты");
         }
     }
-    public void addMonthReport(String[] monthInfo, Integer year, int currentMonth){
-        MonthReportGlobalInfo monthReportGlobalInfo = new MonthReportGlobalInfo();
 
-        if(globalInfoMonthReportsMap.size() > 0 && globalInfoMonthReportsMap.containsKey(year)){
-            monthReportGlobalInfo = globalInfoMonthReportsMap.get(year);
-        }
-
-        monthReportGlobalInfo.addMonthReport(monthInfo, currentMonth);
-        globalInfoMonthReportsMap.put(year,monthReportGlobalInfo);
-    }
 
     public void printMonthReportsInfo(int yearInput){
         if (globalInfoMonthReportsMap.size() > 0 && globalInfoMonthReportsMap.containsKey(yearInput)) {
@@ -63,7 +44,7 @@ public class Report {
             System.out.println("Введен неверный год, либо не загружены отчеты");
         }
     }
-    public void compareReports(int inputYear){
+    public static void compareReports(int inputYear){
         if(globalInfoYearReportsMap.containsKey(inputYear)){
             if(globalInfoMonthReportsMap.containsKey(inputYear)){
              YearReportGlobalInfo yearReportGlobalInfo = globalInfoYearReportsMap.get(inputYear); //мапа месяц - yearReport
